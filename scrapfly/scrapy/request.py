@@ -1,6 +1,5 @@
 from copy import deepcopy
-from functools import partial
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 
 from scrapy import Request
 
@@ -32,23 +31,20 @@ class ScrapflyScrapyRequest(Request):
             **kwargs
         )
 
-    def to_dict(self, spider=None):
-        """
-        Override to_dict to handle serialization with scrape_config.
-        The spider argument is ignored to maintain compatibility with Scrapy.
-        """
-        d = super().to_dict()  # Call the parent class's to_dict
+    def to_dict(self, *, spider: Optional["scrapy.Spider"] = None) -> dict:
+        if spider is None:
+            raise ValueError("The 'spider' argument is required to serialize the request.")
+        d = super().to_dict(spider=spider)
         d['scrape_config'] = self.scrape_config
         return d
 
     @classmethod
-    def from_dict(cls, d):
-        """
-        Override from_dict to handle deserialization of scrape_config.
-        """
-        scrape_config = d.pop('scrape_config', None)
-        return cls(scrape_config=scrape_config, **d)
-
+    def from_dict(cls, data):
+        scrape_config_data = data['meta']['scrapfly_scrape_config'].to_dict()
+        scrape_config = ScrapeConfig.from_dict(scrape_config_data)
+        request = cls(scrape_config=scrape_config)
+        return request
+    
     def replace(self, *args, **kwargs):
         for x in [
             'meta',
