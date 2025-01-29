@@ -40,8 +40,7 @@ class ScrapflyScrapyRequest(Request):
 
     @classmethod
     def from_dict(cls, data):
-        scrape_config_data = data['meta']['scrapfly_scrape_config'].to_dict()
-        scrape_config = ScrapeConfig.from_dict(scrape_config_data)
+        scrape_config = data.pop('scrape_config', None)
         request = cls(scrape_config=scrape_config)
         return request
     
